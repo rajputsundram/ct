@@ -2,35 +2,57 @@ import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabaseServer'
 
 export async function POST(request: Request) {
-const { admissionNumber, password } = await request.json()
+  try {
+    const { admissionNumber, password } = await request.json()
 
-const { data: student, error } = await supabaseServer
-.from('students')
-.select('*')
-.eq('admission_number', admissionNumber)
-.single()
+    if (!admissionNumber || !password) {
+      return NextResponse.json(
+        { message: 'Admission number and password are required' },
+        { status: 400 }
+      )
+    }
 
-if (error || !student) {
-return NextResponse.json(
-{ message: 'Student not found' },
-{ status: 404 }
-)
-}
+    const { data: student, error } = await supabaseServer
+      .from('students')
+      .select('id, admission_number, name, password, class_id')
+      .eq('admission_number', admissionNumber)
+      .single()
 
-if (student.password !== password) {
-return NextResponse.json(
-{ message: 'Invalid password' },
-{ status: 401 }
-)
-}
+    if (error || !student) {
+      return NextResponse.json(
+        { message: 'Student not found' },
+        { status: 404 }
+      )
+    }
 
-const response = NextResponse.json({ success: true })
+    if (student.password !== password) {
+      return NextResponse.json(
+        { message: 'Invalid password' },
+        { status: 401 }
+      )
+    }
 
-response.cookies.set('student_session', String(student.id), {
-httpOnly: true,
-path: '/',
-maxAge: 60 * 60 * 3, // 3 hours
-})
+    const response = NextResponse.json({
+      success: true,
+    })
 
-return response
+    response.cookies.set({
+      name: 'student_session',
+      value: String(student.id),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 3,
+    })
+
+    return response
+  } catch (error) {
+    console.error('Student login error:', error)
+
+    return NextResponse.json(
+      { message: 'Something went wrong during login' },
+      { status: 500 }
+    )
+  }
 }
