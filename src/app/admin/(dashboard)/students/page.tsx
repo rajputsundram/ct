@@ -80,11 +80,9 @@ return (
 
               <td className="p-4">{student.name}</td>
 
-              <td className="p-4">
-                {Array.isArray(student.classes)
-                  ? student.classes[0]?.class_name
-                  : student.classes?.class_name}
-              </td>
+            <td className="p-4">
+  {student.classes?.[0]?.class_name ?? 'N/A'}
+</td>
 
               <td className="p-4">
                 <div className="flex gap-2">
