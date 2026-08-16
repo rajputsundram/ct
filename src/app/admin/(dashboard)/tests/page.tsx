@@ -106,7 +106,7 @@ export default async function TestsPage() {
                 </td>
 
                 <td className="p-4">
-                  {test.classes?.[0]?.class_name ?? 'N/A'}
+                  {test.classes?.class_name ?? 'N/A'}
                 </td>
 
                 <td className="p-4">
@@ -149,7 +149,7 @@ export default async function TestsPage() {
                     </Link>
 
                     <Link
-                      href={`/admin/results/${test.classes?.[0]?.id}/${test.id}`}
+                      href={`/admin/results/${test.classes?.id}/${test.id}`}
                       className="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700"
                     >
                       Results
