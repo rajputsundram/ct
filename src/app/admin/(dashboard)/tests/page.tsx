@@ -99,127 +99,133 @@ export default async function TestsPage() {
           </thead>
 
           <tbody>
-            {tests?.map((test) => (
-              <tr key={test.id} className="border-t">
-                <td className="p-4">
-                  {test.test_title}
-                </td>
+            {tests?.map((test) => {
+              const testClass = Array.isArray(test.classes)
+                ? test.classes[0]
+                : test.classes
 
-                <td className="p-4">
-                  {test.classes?.class_name ?? 'N/A'}
-                </td>
+              return (
+                <tr key={test.id} className="border-t">
+                  <td className="p-4">
+                    {test.test_title}
+                  </td>
 
-                <td className="p-4">
-                  {test.chapter}
-                </td>
+                  <td className="p-4">
+                    {testClass?.class_name ?? 'N/A'}
+                  </td>
 
-                <td className="p-4">
-                  {test.test_date}
-                </td>
+                  <td className="p-4">
+                    {test.chapter}
+                  </td>
 
-                <td className="p-4">
-                  {test.duration_minutes} min
-                </td>
+                  <td className="p-4">
+                    {test.test_date}
+                  </td>
 
-                <td className="p-4">
-                  {test.total_marks}
-                </td>
+                  <td className="p-4">
+                    {test.duration_minutes} min
+                  </td>
 
-                <td className="p-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      test.status === 'active'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-yellow-100 text-yellow-700'
-                    }`}
-                  >
-                    {test.status === 'active'
-                      ? 'Active'
-                      : 'Scheduled'}
-                  </span>
-                </td>
+                  <td className="p-4">
+                    {test.total_marks}
+                  </td>
 
-                <td className="p-4">
-                  <div className="flex gap-2 flex-wrap">
-                    <Link
-                      href={`/admin/tests/${test.id}/questions`}
-                      className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700"
+                  <td className="p-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        test.status === 'active'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}
                     >
-                      Questions
-                    </Link>
+                      {test.status === 'active'
+                        ? 'Active'
+                        : 'Scheduled'}
+                    </span>
+                  </td>
 
-                    <Link
-                      href={`/admin/results/${test.classes?.id}/${test.id}`}
-                      className="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700"
-                    >
-                      Results
-                    </Link>
-
-                    <Link
-                      href={`/admin/tests/${test.id}/edit`}
-                      className="bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600"
-                    >
-                      Edit
-                    </Link>
-
-                    <form action={updateTestStatus}>
-                      <input
-                        type="hidden"
-                        name="testId"
-                        value={test.id}
-                      />
-
-                      {test.status === 'active' ? (
-                        <>
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="scheduled"
-                          />
-
-                          <button
-                            type="submit"
-                            className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700"
-                          >
-                            Disable
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <input
-                            type="hidden"
-                            name="status"
-                            value="active"
-                          />
-
-                          <button
-                            type="submit"
-                            className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700"
-                          >
-                            Activate
-                          </button>
-                        </>
-                      )}
-                    </form>
-
-                    <form action={deleteTest}>
-                      <input
-                        type="hidden"
-                        name="testId"
-                        value={test.id}
-                      />
-
-                      <button
-                        type="submit"
-                        className="bg-red-800 text-white px-3 py-2 rounded-lg hover:bg-red-900"
+                  <td className="p-4">
+                    <div className="flex gap-2 flex-wrap">
+                      <Link
+                        href={`/admin/tests/${test.id}/questions`}
+                        className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700"
                       >
-                        Delete
-                      </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                        Questions
+                      </Link>
+
+                      <Link
+                        href={`/admin/results/${testClass?.id}/${test.id}`}
+                        className="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700"
+                      >
+                        Results
+                      </Link>
+
+                      <Link
+                        href={`/admin/tests/${test.id}/edit`}
+                        className="bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600"
+                      >
+                        Edit
+                      </Link>
+
+                      <form action={updateTestStatus}>
+                        <input
+                          type="hidden"
+                          name="testId"
+                          value={test.id}
+                        />
+
+                        {test.status === 'active' ? (
+                          <>
+                            <input
+                              type="hidden"
+                              name="status"
+                              value="scheduled"
+                            />
+
+                            <button
+                              type="submit"
+                              className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700"
+                            >
+                              Disable
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <input
+                              type="hidden"
+                              name="status"
+                              value="active"
+                            />
+
+                            <button
+                              type="submit"
+                              className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700"
+                            >
+                              Activate
+                            </button>
+                          </>
+                        )}
+                      </form>
+
+                      <form action={deleteTest}>
+                        <input
+                          type="hidden"
+                          name="testId"
+                          value={test.id}
+                        />
+
+                        <button
+                          type="submit"
+                          className="bg-red-800 text-white px-3 py-2 rounded-lg hover:bg-red-900"
+                        >
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
