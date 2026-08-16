@@ -90,7 +90,9 @@ export default async function StudentsPage({
                   </td>
 
                   <td className="p-4">
-                    {student.classes?.[0]?.class_name ?? 'N/A'}
+                   
+                    {`student.classes?.class_name ?? 'N/A'`}
+                    
                   </td>
 
                   <td className="p-4">
