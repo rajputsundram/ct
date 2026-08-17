@@ -16,6 +16,7 @@ setError('')
 
 const res = await fetch('/api/student/login', {
   method: 'POST',
+  credentials: 'include',
   headers: {
     'Content-Type': 'application/json',
   },
