@@ -17,10 +17,14 @@ const session = cookieStore.get('student_session')
 // Student must be logged in
 if (!session) {
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold">Session Cookie Missing</h1>
-      <p>student_session cookie was not found.</p>
-    </div>
+    <main className="p-10">
+      <h1 className="text-2xl font-bold">
+        SESSION COOKIE NOT FOUND
+      </h1>
+      <p className="mt-4">
+        The student_session cookie is missing on this request.
+      </p>
+    </main>
   )
 }
 const studentId = Number(session.value)
@@ -34,10 +38,14 @@ const { data: student } = await supabaseServer
 
 if (!student) {
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold">Student Not Found</h1>
-      <p>Cookie exists, but the student could not be found in Supabase.</p>
-    </div>
+    <main className="p-10">
+      <h1 className="text-2xl font-bold">
+        STUDENT NOT FOUND
+      </h1>
+      <p className="mt-4">
+        The cookie exists, but Supabase could not find this student.
+      </p>
+    </main>
   )
 }
 
