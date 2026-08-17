@@ -48,11 +48,12 @@ export async function POST(request: Request) {
       name: student.name,
     })
 
+    // This automatically replaces the old student_session cookie
     response.cookies.set({
       name: 'student_session',
       value: String(student.id),
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 3,
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
 
     console.log('STUDENT LOGIN SUCCESS')
     console.log('Student ID:', student.id)
-    console.log('Cookie set: student_session')
+    console.log('Cookie set/replaced: student_session')
 
     return response
   } catch (error) {

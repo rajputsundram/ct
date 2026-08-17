@@ -40,7 +40,9 @@ export default function StudentLoginPage() {
 
       console.log('LOGIN RESPONSE:', data)
 
-      router.push('/student')
+      // Login successful.
+      // The API has already set/replaced student_session.
+      router.replace('/student')
       router.refresh()
     } catch (error) {
       console.error('Login error:', error)
