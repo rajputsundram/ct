@@ -36,9 +36,11 @@ export default function StudentLoginPage() {
         return
       }
 
-      // Login successful
-      window.location.href = '/student'
+      // Give the browser a moment to finish storing the cookie
+      await new Promise((resolve) => setTimeout(resolve, 200))
 
+      // Go to dashboard
+      window.location.assign('/student')
     } catch (error) {
       console.error('Login error:', error)
 
