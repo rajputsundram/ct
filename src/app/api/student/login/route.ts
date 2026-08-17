@@ -5,7 +5,6 @@ export async function POST(request: Request) {
   try {
     const { admissionNumber, password } = await request.json()
 
-    // Check input
     if (!admissionNumber || !password) {
       return NextResponse.json(
         {
@@ -15,7 +14,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Find student
     const { data: student, error } = await supabaseServer
       .from('students')
       .select(
@@ -24,7 +22,6 @@ export async function POST(request: Request) {
       .eq('admission_number', admissionNumber)
       .single()
 
-    // Student not found
     if (error || !student) {
       console.error('Student lookup error:', error)
 
@@ -36,7 +33,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Check password
     if (student.password !== password) {
       return NextResponse.json(
         {
@@ -46,26 +42,25 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create response
     const response = NextResponse.json({
       success: true,
       studentId: student.id,
       name: student.name,
     })
 
-    // Create student session cookie
-    response.cookies.set('student_session', String(student.id), {
+    response.cookies.set({
+      name: 'student_session',
+      value: String(student.id),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 3,
     })
 
-    console.log(
-      'Student login successful:',
-      student.id
-    )
+    console.log('STUDENT LOGIN SUCCESS')
+    console.log('Student ID:', student.id)
+    console.log('Cookie set: student_session')
 
     return response
   } catch (error) {

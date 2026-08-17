@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function StudentLoginPage() {
+  const router = useRouter()
+
   const [admissionNumber, setAdmissionNumber] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,9 +40,8 @@ export default function StudentLoginPage() {
 
       console.log('LOGIN RESPONSE:', data)
 
-      // Login successful
-      // Redirect to student area
-      window.location.href = '/student'
+      router.push('/student')
+      router.refresh()
     } catch (error) {
       console.error('Login error:', error)
 
@@ -72,7 +74,9 @@ export default function StudentLoginPage() {
           <input
             type="text"
             value={admissionNumber}
-            onChange={(e) => setAdmissionNumber(e.target.value)}
+            onChange={(e) =>
+              setAdmissionNumber(e.target.value)
+            }
             className="w-full border rounded-lg p-3"
             placeholder="Enter admission number"
             required
@@ -87,7 +91,9 @@ export default function StudentLoginPage() {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
             className="w-full border rounded-lg p-3"
             placeholder="Enter password"
             required
