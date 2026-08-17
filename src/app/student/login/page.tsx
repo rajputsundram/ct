@@ -29,26 +29,22 @@ export default function StudentLoginPage() {
 
       const data = await res.json()
 
-      setLoading(false)
-
       if (!res.ok) {
         setError(data.message || 'Login failed')
+        setLoading(false)
         return
       }
 
       console.log('LOGIN RESPONSE:', data)
 
-      alert(
-        `Login API succeeded!\nStudent ID: ${data.studentId}\n\nNow check the browser cookies.`
-      )
-
-      // TEMPORARY: don't redirect yet
-      return
+      // Login successful
+      // Redirect to student area
+      window.location.href = '/student'
     } catch (error) {
       console.error('Login error:', error)
 
-      setLoading(false)
       setError('Something went wrong during login.')
+      setLoading(false)
     }
   }
 
@@ -93,6 +89,7 @@ export default function StudentLoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border rounded-lg p-3"
+            placeholder="Enter password"
             required
           />
         </div>
