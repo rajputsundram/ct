@@ -36,11 +36,14 @@ export default function StudentLoginPage() {
         return
       }
 
-      // Give the browser a moment to finish storing the cookie
-      await new Promise((resolve) => setTimeout(resolve, 200))
+      console.log('LOGIN RESPONSE:', data)
 
-      // Go to dashboard
-      window.location.assign('/student')
+      alert(
+        `Login API succeeded!\nStudent ID: ${data.studentId}\n\nNow check the browser cookies.`
+      )
+
+      // TEMPORARY: don't redirect yet
+      return
     } catch (error) {
       console.error('Login error:', error)
 
@@ -73,9 +76,7 @@ export default function StudentLoginPage() {
           <input
             type="text"
             value={admissionNumber}
-            onChange={(e) =>
-              setAdmissionNumber(e.target.value)
-            }
+            onChange={(e) => setAdmissionNumber(e.target.value)}
             className="w-full border rounded-lg p-3"
             placeholder="Enter admission number"
             required
@@ -90,11 +91,8 @@ export default function StudentLoginPage() {
           <input
             type="password"
             value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full border rounded-lg p-3"
-            placeholder="Enter password"
             required
           />
         </div>
