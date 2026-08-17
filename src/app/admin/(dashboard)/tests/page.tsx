@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
@@ -12,7 +12,7 @@ async function updateTestStatus(formData: FormData) {
     throw new Error('Test ID and status are required')
   }
 
-  const { error } = await supabaseServer
+  const { error } = await supabaseAdmin
     .from('tests')
     .update({ status })
     .eq('id', testId)
@@ -34,7 +34,7 @@ async function deleteTest(formData: FormData) {
   }
 
   // Delete related attempts first
-  const { error: attemptsError } = await supabaseServer
+  const { error: attemptsError } = await supabaseAdmin
     .from('test_attempts')
     .delete()
     .eq('test_id', testId)
@@ -46,7 +46,7 @@ async function deleteTest(formData: FormData) {
   }
 
   // Delete related questions
-  const { error: questionsError } = await supabaseServer
+  const { error: questionsError } = await supabaseAdmin
     .from('questions')
     .delete()
     .eq('test_id', testId)
@@ -58,7 +58,7 @@ async function deleteTest(formData: FormData) {
   }
 
   // Delete the test
-  const { error: testError } = await supabaseServer
+  const { error: testError } = await supabaseAdmin
     .from('tests')
     .delete()
     .eq('id', testId)
@@ -73,7 +73,7 @@ async function deleteTest(formData: FormData) {
 }
 
 export default async function TestsPage() {
-  const { data: tests, error } = await supabaseServer
+  const { data: tests, error } = await supabaseAdmin
     .from('tests')
     .select(
       `
@@ -199,6 +199,7 @@ export default async function TestsPage() {
                       <td className="p-4">
                         <div className="flex gap-2 flex-wrap">
 
+                          {/* Questions */}
                           <Link
                             href={`/admin/tests/${test.id}/questions`}
                             className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700"
@@ -206,6 +207,7 @@ export default async function TestsPage() {
                             Questions
                           </Link>
 
+                          {/* Results */}
                           <Link
                             href={`/admin/results/${testClass?.id}/${test.id}`}
                             className="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700"
@@ -213,6 +215,7 @@ export default async function TestsPage() {
                             Results
                           </Link>
 
+                          {/* Edit */}
                           <Link
                             href={`/admin/tests/${test.id}/edit`}
                             className="bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600"
@@ -220,6 +223,7 @@ export default async function TestsPage() {
                             Edit
                           </Link>
 
+                          {/* Activate / Disable */}
                           <form action={updateTestStatus}>
                             <input
                               type="hidden"
@@ -260,6 +264,7 @@ export default async function TestsPage() {
                             )}
                           </form>
 
+                          {/* Delete */}
                           <form action={deleteTest}>
                             <input
                               type="hidden"
