@@ -34,13 +34,12 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({
       success: true,
+      studentId: student.id,
     })
 
-    response.cookies.set({
-      name: 'student_session',
-      value: String(student.id),
+    response.cookies.set('student_session', String(student.id), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 3,
@@ -48,8 +47,8 @@ export async function POST(request: Request) {
 
     // Temporary diagnostic header
     response.headers.set(
-      'X-Student-Cookie-Test',
-      'cookie-created'
+      'X-Student-Login-Cookie',
+      'created'
     )
 
     return response
