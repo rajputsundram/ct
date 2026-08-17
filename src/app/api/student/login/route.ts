@@ -46,6 +46,12 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 3,
     })
 
+    // Temporary diagnostic header
+    response.headers.set(
+      'X-Student-Cookie-Test',
+      'cookie-created'
+    )
+
     return response
   } catch (error) {
     console.error('Student login error:', error)
