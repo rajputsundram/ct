@@ -5,17 +5,13 @@ export async function GET() {
     message: 'Test cookie created',
   })
 
-  response.cookies.set(
-    'test_cookie',
-    'hello',
-    {
-      httpOnly: false,
-      secure: false,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 3600,
-    }
-  )
+  response.cookies.set('test_cookie', 'hello', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 3600,
+  })
 
   return response
 }
