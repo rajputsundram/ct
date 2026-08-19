@@ -10,6 +10,12 @@ function normalize(text: string = '') {
     .trim()
 }
 
+/*
+  --------------------------------
+  GEMINI QA EVALUATION
+  --------------------------------
+*/
+
 async function evaluateQaAnswer(
   question: string,
   modelAnswer: string,
@@ -17,60 +23,81 @@ async function evaluateQaAnswer(
   maxMarks: number
 ): Promise<number> {
   try {
-    console.log('GEMINI KEY EXISTS:', !!process.env.GEMINI_API_KEY)
+    const apiKey = process.env.GEMINI_API_KEY
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [
-              {
-                text: `
-You are an experienced and fair school Computer Science teacher evaluating a student's exam answer.
+    console.log('------------------------------------')
+    console.log('QA EVALUATION START')
+    console.log('Question:', question)
+    console.log('Model Answer:', modelAnswer)
+    console.log('Student Answer:', studentAnswer)
+    console.log('Maximum Marks:', maxMarks)
+    console.log('Gemini Key Exists:', !!apiKey)
+    console.log('------------------------------------')
 
-Your job is to award marks fairly based on the student's actual understanding of the question.
+    /*
+      --------------------------------
+      CHECK API KEY
+      --------------------------------
+    */
 
-IMPORTANT MARKING RULES:
+    if (!apiKey) {
+      console.error('GEMINI_API_KEY is missing')
+      return 0
+    }
 
-1. Evaluate the MEANING of the student's answer, not exact word matching.
-2. Do NOT require the student to use the same words or sentences as the official answer.
-3. Accept different wording, sentence structure, terminology, and valid explanations when they communicate the same concept.
-4. Ignore minor spelling, grammar, punctuation, or English-language mistakes when the intended technical meaning is clear.
-5. Award FULL marks when the student demonstrates all important concepts required by the question.
-6. Award PARTIAL marks when the student demonstrates some, but not all, of the required concepts.
-7. Give ZERO marks when the answer is incorrect, irrelevant, or does not demonstrate understanding of the question.
-8. Do not give marks merely because the student's answer contains words that appear in the official answer.
-9. Do not give marks for irrelevant or meaningless extra information.
-10. If the student gives both correct and incorrect information, consider the incorrect information when deciding the final score.
-11. Do not assume that the student knows something unless their answer demonstrates it.
-12. Consider the maximum marks when deciding how much of the concept is required.
-13. For a simple one-point question, a concise correct answer can receive full marks.
-14. For a question requiring multiple points, award marks according to how many important points the student correctly addresses.
-15. Be consistent and fair, similar to how a knowledgeable human school teacher would mark the answer.
-16. Never penalize a student simply because their answer is shorter than the official answer if it correctly contains the required concept.
-17. Never award more than the maximum marks.
-18. Never award less than zero marks.
-19. The final score may be a decimal number when partial marks are appropriate.
-20. Return ONLY the numerical score. Do not return explanations, JSON, markdown, words, or symbols.
-`,
-              },
-            ],
-          },
+    /*
+      --------------------------------
+      CHECK MODEL ANSWER
+      --------------------------------
+    */
 
-          contents: [
-            {
-              parts: [
-                {
-                  text: `
+    if (!modelAnswer || !modelAnswer.trim()) {
+      console.error(
+        'Model answer is empty. Cannot evaluate QA.'
+      )
+
+      return 0
+    }
+
+    /*
+      --------------------------------
+      CHECK STUDENT ANSWER
+      --------------------------------
+    */
+
+    if (!studentAnswer || !studentAnswer.trim()) {
+      console.log('Student answer is empty')
+      return 0
+    }
+
+    /*
+      --------------------------------
+      CHECK MAXIMUM MARKS
+      --------------------------------
+    */
+
+    if (!maxMarks || maxMarks <= 0) {
+      console.error(
+        'Invalid maximum marks:',
+        maxMarks
+      )
+
+      return 0
+    }
+
+    /*
+      --------------------------------
+      GEMINI PROMPT
+      --------------------------------
+    */
+
+    const prompt = `
+You are grading a school Computer Science examination answer.
+
 Question:
 ${question}
 
-Official/Model Answer:
+Model Answer:
 ${modelAnswer}
 
 Student Answer:
@@ -79,101 +106,371 @@ ${studentAnswer}
 Maximum Marks:
 ${maxMarks}
 
-Evaluate the student's answer according to the marking rules and return ONLY the numerical score.
-`,
+Evaluate the student's answer based on meaning, correctness, and understanding.
+
+Rules:
+1. Do not require exact wording from the model answer.
+2. Accept different wording if the meaning is correct.
+3. Ignore minor spelling, grammar, punctuation, and English mistakes.
+4. Give full marks when the student correctly provides the required concept.
+5. Give partial marks when the student demonstrates only part of the required knowledge.
+6. Give zero marks when the answer is incorrect, irrelevant, or demonstrates no understanding.
+7. Do not award marks just because some words match.
+8. Do not penalize a student merely because their answer is shorter.
+9. A short but correct answer can receive full marks when the question asks for one concept or feature.
+10. The score must be between 0 and ${maxMarks}.
+11. Decimal scores are allowed.
+
+Return ONLY the numerical score.
+
+Do not return:
+- explanations
+- words
+- JSON
+- markdown
+- "marks"
+
+Examples of valid output:
+0
+1
+1.5
+2
+3
+4
+
+Now return only the score.
+`
+
+    console.log('Sending request to Gemini...')
+
+    /*
+      --------------------------------
+      GEMINI API REQUEST
+      --------------------------------
+    */
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+        },
+
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
                 },
               ],
             },
           ],
 
           generationConfig: {
-            temperature: 0.1,
+            temperature: 0,
+            maxOutputTokens: 100,
             responseMimeType: 'text/plain',
           },
         }),
       }
     )
 
-    console.log('Gemini status:', response.status)
+    console.log(
+      'Gemini HTTP Status:',
+      response.status
+    )
+
+    /*
+      --------------------------------
+      READ GEMINI RESPONSE
+      --------------------------------
+    */
 
     const data = await response.json()
 
     console.log(
-      'Gemini response:',
+      'Gemini Full Response:',
       JSON.stringify(data, null, 2)
     )
 
+    /*
+      --------------------------------
+      GEMINI API ERROR
+      --------------------------------
+    */
+
     if (!response.ok) {
-      console.error('Gemini API error:', data)
+      console.error(
+        'Gemini API Error:',
+        data
+      )
+
       return 0
     }
 
+    /*
+      --------------------------------
+      EXTRACT GEMINI ANSWER
+      --------------------------------
+    */
+
     const text =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ?? '0'
+      data?.candidates?.[0]?.content?.parts?.[0]?.text
+
+    console.log(
+      'Gemini Raw Answer:',
+      text
+    )
 
     /*
-      Gemini might theoretically return something like:
-      "1.5"
-      or
-      "1.5\n"
-
-      Extract the first valid number.
+      --------------------------------
+      NO GEMINI ANSWER
+      --------------------------------
     */
-    const match = String(text).trim().match(/-?\d+(?:\.\d+)?/)
+
+    if (!text) {
+      console.error(
+        'Gemini did not return a score.'
+      )
+
+      console.error(
+        'Finish Reason:',
+        data?.candidates?.[0]?.finishReason
+      )
+
+      return 0
+    }
+
+    /*
+      --------------------------------
+      CLEAN RESPONSE
+      --------------------------------
+    */
+
+    const cleanedText = String(text)
+      .trim()
+      .replace(',', '.')
+
+    console.log(
+      'Cleaned Gemini Answer:',
+      cleanedText
+    )
+
+    /*
+      --------------------------------
+      EXTRACT NUMBER
+      --------------------------------
+    */
+
+    const match = cleanedText.match(
+      /-?\d+(?:\.\d+)?/
+    )
 
     if (!match) {
-      console.error('Could not extract score from Gemini:', text)
+      console.error(
+        'Could not extract score from Gemini:',
+        cleanedText
+      )
+
       return 0
     }
 
     const score = Number(match[0])
 
-    if (Number.isNaN(score)) {
+    console.log(
+      'Gemini Parsed Score:',
+      score
+    )
+
+    /*
+      --------------------------------
+      VALIDATE SCORE
+      --------------------------------
+    */
+
+    if (!Number.isFinite(score)) {
+      console.error(
+        'Gemini returned invalid score:',
+        score
+      )
+
       return 0
     }
 
-    return Math.max(0, Math.min(maxMarks, score))
-  } catch (err) {
-    console.error('Gemini evaluation error:', err)
+    /*
+      --------------------------------
+      LIMIT SCORE
+      --------------------------------
+    */
+
+    const finalScore = Math.max(
+      0,
+      Math.min(
+        maxMarks,
+        score
+      )
+    )
+
+    console.log(
+      'Final QA Score:',
+      finalScore
+    )
+
+    console.log(
+      'QA EVALUATION END'
+    )
+
+    console.log(
+      '------------------------------------'
+    )
+
+    return finalScore
+  } catch (error) {
+    console.error(
+      'Gemini QA Evaluation Error:',
+      error
+    )
+
     return 0
   }
 }
 
-export async function POST(request: Request) {
+/*
+  ====================================
+  SUBMIT TEST
+  ====================================
+*/
+
+export async function POST(
+  request: Request
+) {
   try {
+    /*
+      --------------------------------
+      CHECK STUDENT SESSION
+      --------------------------------
+    */
+
     const cookieStore = await cookies()
-    const session = cookieStore.get('student_session')
+
+    const session =
+      cookieStore.get('student_session')
 
     if (!session) {
+      console.error(
+        'Student session cookie not found.'
+      )
+
       return NextResponse.json(
-        { message: 'Not logged in' },
-        { status: 401 }
+        {
+          message: 'Not logged in',
+        },
+        {
+          status: 401,
+        }
       )
     }
 
-    const studentId = Number(session.value)
+    const studentId =
+      Number(session.value)
 
-    const { testId, answers } = await request.json()
+    if (!studentId) {
+      console.error(
+        'Invalid student session:',
+        session.value
+      )
+
+      return NextResponse.json(
+        {
+          message:
+            'Invalid student session',
+        },
+        {
+          status: 401,
+        }
+      )
+    }
+
+    /*
+      --------------------------------
+      READ REQUEST
+      --------------------------------
+    */
+
+    const body = await request.json()
+
+    const testId = body?.testId
+    const answers = body?.answers
+
+    console.log(
+      'Submitting test:',
+      {
+        studentId,
+        testId,
+      }
+    )
 
     if (!testId) {
       return NextResponse.json(
-        { message: 'Test ID is required' },
-        { status: 400 }
+        {
+          message:
+            'Test ID is required',
+        },
+        {
+          status: 400,
+        }
       )
     }
 
-    const { data: questions, error: questionsError } =
-      await supabaseServer
-        .from('questions')
-        .select(`
-          id,
-          question,
-          question_type,
-          correct_answer,
-          model_answer,
-          marks
-        `)
-        .eq('test_id', testId)
+    /*
+      --------------------------------
+      CHECK ANSWERS OBJECT
+      --------------------------------
+    */
+
+    if (
+      !answers ||
+      typeof answers !== 'object'
+    ) {
+      console.error(
+        'Answers object is missing or invalid:',
+        answers
+      )
+
+      return NextResponse.json(
+        {
+          message:
+            'Answers are required',
+        },
+        {
+          status: 400,
+        }
+      )
+    }
+
+    /*
+      --------------------------------
+      FETCH QUESTIONS
+      --------------------------------
+    */
+
+    const {
+      data: questions,
+      error: questionsError,
+    } = await supabaseServer
+      .from('questions')
+      .select(`
+        id,
+        question,
+        question_type,
+        correct_answer,
+        model_answer,
+        marks
+      `)
+      .eq('test_id', testId)
 
     if (questionsError) {
       console.error(
@@ -182,91 +479,268 @@ export async function POST(request: Request) {
       )
 
       return NextResponse.json(
-        { message: questionsError.message },
-        { status: 500 }
+        {
+          message:
+            questionsError.message,
+        },
+        {
+          status: 500,
+        }
       )
     }
 
-    if (!questions || questions.length === 0) {
+    if (
+      !questions ||
+      questions.length === 0
+    ) {
+      console.error(
+        'No questions found for test:',
+        testId
+      )
+
       return NextResponse.json(
-        { message: 'Questions not found' },
-        { status: 404 }
+        {
+          message:
+            'Questions not found',
+        },
+        {
+          status: 404,
+        }
       )
     }
+
+    console.log(
+      `Found ${questions.length} questions`
+    )
+
+    /*
+      --------------------------------
+      CALCULATE SCORE
+      --------------------------------
+    */
 
     let score = 0
     let totalMarks = 0
 
     for (const q of questions) {
-      const marks = Number(q.marks) || 0
+      const marks =
+        Number(q.marks) || 0
 
       totalMarks += marks
 
-      const studentAnswer = answers?.[q.id]
+      const studentAnswer =
+        answers?.[q.id]
+
+      console.log(
+        '------------------------------------'
+      )
+
+      console.log(
+        'Checking Question:',
+        {
+          id: q.id,
+          type: q.question_type,
+          question: q.question,
+          correctAnswer:
+            q.correct_answer,
+          modelAnswer:
+            q.model_answer,
+          marks,
+          studentAnswer,
+        }
+      )
 
       /*
-        Student did not answer this question.
-        Therefore, it receives zero marks.
+        --------------------------------
+        UNANSWERED
+        --------------------------------
       */
+
       if (
         studentAnswer === undefined ||
         studentAnswer === null ||
         String(studentAnswer).trim() === ''
       ) {
+        console.log(
+          'Question unanswered -> 0 marks'
+        )
+
         continue
       }
 
       /*
+        --------------------------------
         MCQ
+        --------------------------------
       */
-      if (q.question_type === 'MCQ') {
-        if (
-          normalize(String(studentAnswer)) ===
-          normalize(String(q.correct_answer || ''))
-        ) {
-          score += marks
-        }
-      }
 
-      /*
-        Fill in the blanks
-      */
-      else if (q.question_type === 'FILL') {
-        if (
-          normalize(String(studentAnswer)) ===
-          normalize(String(q.correct_answer || ''))
-        ) {
-          score += marks
-        }
-      }
+      if (
+        q.question_type === 'MCQ'
+      ) {
+        const student =
+          normalize(
+            String(studentAnswer)
+          )
 
-      /*
-        Question & Answer
-        Gemini evaluates meaning, correctness,
-        completeness and partial understanding.
-      */
-      else if (q.question_type === 'QA') {
-        const aiScore = await evaluateQaAnswer(
-          q.question || '',
-          q.model_answer || '',
-          String(studentAnswer),
-          marks
+        const correct =
+          normalize(
+            String(
+              q.correct_answer || ''
+            )
+          )
+
+        console.log(
+          'MCQ comparison:',
+          {
+            student,
+            correct,
+          }
         )
 
+        if (student === correct) {
+          score += marks
+
+          console.log(
+            `MCQ correct -> +${marks}`
+          )
+        } else {
+          console.log(
+            'MCQ incorrect -> +0'
+          )
+        }
+      }
+
+      /*
+        --------------------------------
+        FILL IN THE BLANK
+        --------------------------------
+      */
+
+      else if (
+        q.question_type === 'FILL'
+      ) {
+        const student =
+          normalize(
+            String(studentAnswer)
+          )
+
+        const correct =
+          normalize(
+            String(
+              q.correct_answer || ''
+            )
+          )
+
+        console.log(
+          'FILL comparison:',
+          {
+            student,
+            correct,
+          }
+        )
+
+        if (student === correct) {
+          score += marks
+
+          console.log(
+            `FILL correct -> +${marks}`
+          )
+        } else {
+          console.log(
+            'FILL incorrect -> +0'
+          )
+        }
+      }
+
+      /*
+        --------------------------------
+        QUESTION & ANSWER
+        --------------------------------
+      */
+
+      else if (
+        q.question_type === 'QA'
+      ) {
+        console.log(
+          'Starting Gemini QA evaluation...'
+        )
+
+        const aiScore =
+          await evaluateQaAnswer(
+            q.question || '',
+            q.model_answer || '',
+            String(studentAnswer),
+            marks
+          )
+
         score += aiScore
+
+        console.log(
+          `QA score: ${aiScore}/${marks}`
+        )
+
+        console.log(
+          `Running total score: ${score}`
+        )
+      }
+
+      /*
+        --------------------------------
+        UNKNOWN QUESTION TYPE
+        --------------------------------
+      */
+
+      else {
+        console.error(
+          'Unknown question type:',
+          q.question_type
+        )
       }
     }
 
     /*
-      Prevent accidental floating-point values
-      outside the valid range.
+      --------------------------------
+      FINAL SCORE
+      --------------------------------
     */
+
     score = Math.max(
       0,
-      Math.min(totalMarks, Number(score.toFixed(2)))
+      Math.min(
+        totalMarks,
+        Number(
+          score.toFixed(2)
+        )
+      )
     )
 
-    const { error } = await supabaseServer
+    console.log(
+      '===================================='
+    )
+
+    console.log(
+      'FINAL TEST RESULT:',
+      {
+        studentId,
+        testId,
+        score,
+        totalMarks,
+      }
+    )
+
+    console.log(
+      '===================================='
+    )
+
+    /*
+      --------------------------------
+      SAVE RESULT
+      --------------------------------
+    */
+
+    const {
+      error: saveError,
+    } = await supabaseServer
       .from('test_attempts')
       .upsert(
         {
@@ -274,39 +748,57 @@ export async function POST(request: Request) {
           test_id: testId,
           answers,
           score,
-          total_marks: totalMarks,
+          total_marks:
+            totalMarks,
         },
         {
-          onConflict: 'student_id,test_id',
+          onConflict:
+            'student_id,test_id',
         }
       )
 
-    if (error) {
+    if (saveError) {
       console.error(
         'Test attempt save error:',
-        error
+        saveError
       )
 
       return NextResponse.json(
-        { message: error.message },
-        { status: 500 }
+        {
+          message:
+            saveError.message,
+        },
+        {
+          status: 500,
+        }
       )
     }
+
+    /*
+      --------------------------------
+      SUCCESS
+      --------------------------------
+    */
 
     return NextResponse.json({
       success: true,
       score,
       totalMarks,
     })
-  } catch (err) {
+  } catch (error) {
     console.error(
       'Submit test error:',
-      err
+      error
     )
 
     return NextResponse.json(
-      { message: 'Something went wrong while checking the test.' },
-      { status: 500 }
+      {
+        message:
+          'Something went wrong while checking the test.',
+      },
+      {
+        status: 500,
+      }
     )
   }
 }
